@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { useStore } from '../store.js';
+import { useStore, isFixed } from '../store.js';
 import { fmtEUR, currentMonth, addMonths, monthLabel } from '../lib.js';
 import { Segmented } from '../components.jsx';
 
@@ -167,9 +167,12 @@ function ByCategory({ months }) {
   const gastos = s.categories.filter((c) => c.kind === 'gasto').sort((a, b) => (totals[b.id] || 0) - (totals[a.id] || 0));
   const ingresos = s.categories.filter((c) => c.kind === 'ingreso');
   const [catId, setCatId] = useState(gastos[0]?.id || '');
-  const cat = s.categories.find((c) => c.id === catId);
-
-  const per = (id) => months.map((m) => inRange.filter((x) => x.category_id === id && x.date.startsWith(m)).reduce((a, x) => a + x.amount_cents, 0));
+  const PSEUDO = { __fijos: { name: 'Gastos fijos', kind: 'gasto' }, __variables: { name: 'Gastos variables', kind: 'gasto' } };
+  const cat = PSEUDO[catId] || s.categories.find((c) => c.id === catId);
+  const match = (x, id) => id === '__fijos' ? (x.kind === 'gasto' && isFixed(x))
+    : id === '__variables' ? (x.kind === 'gasto' && !isFixed(x))
+    : x.category_id === id;
+  const per = (id) => months.map((m) => inRange.filter((x) => match(x, id) && x.date.startsWith(m)).reduce((a, x) => a + x.amount_cents, 0));
   const data = per(catId);
   const total = data.reduce((a, b) => a + b, 0);
   const withData = data.filter((v) => v > 0).length || 1;
@@ -186,11 +189,13 @@ function ByCategory({ months }) {
   const color = cat?.kind === 'ingreso' ? 'var(--accent)' : 'var(--accent)';
 
   const matrix = gastos.filter((c) => totals[c.id]).map((c) => ({ c, vals: per(c.id) }));
+  const summaryRows = [{ c: { id: '__fijos', name: 'Total fijos' }, vals: per('__fijos') }, { c: { id: '__variables', name: 'Total variables' }, vals: per('__variables') }];
 
   return (
     <>
       <label class="field">Categoría
         <select class="select" value={catId} onChange={(e) => setCatId(e.target.value)}>
+          <optgroup label="Fijos y variables"><option value="__fijos">Gastos fijos</option><option value="__variables">Gastos variables</option></optgroup>
           <optgroup label="Gastos">{gastos.map((c) => <option value={c.id}>{c.name}</option>)}</optgroup>
           <optgroup label="Ingresos">{ingresos.map((c) => <option value={c.id}>{c.name}</option>)}</optgroup>
         </select>
@@ -236,8 +241,8 @@ function ByCategory({ months }) {
           <table class="tbl num matrix">
             <thead><tr><th>Categoría</th>{months.map((m) => <th class="r">{monthLabel(m, true)}</th>)}<th class="r">Total</th></tr></thead>
             <tbody>
-              {matrix.map(({ c, vals }) => (
-                <tr class={c.id === catId ? 'sel' : ''} onClick={() => setCatId(c.id)} style={{ cursor: 'pointer' }}>
+              {matrix.concat(summaryRows).map(({ c, vals }) => (
+                <tr class={`${c.id === catId ? 'sel' : ''} ${c.id.startsWith('__') ? 'total-row' : ''}`} onClick={() => setCatId(c.id)} style={{ cursor: 'pointer' }}>
                   <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{c.name}</td>
                   {vals.map((v) => <td class="r">{v ? fmtEUR(v).replace(' €', '') : <span class="muted">—</span>}</td>)}
                   <td class="r" style={{ fontWeight: 800 }}>{fmtEUR(vals.reduce((a, b) => a + b, 0)).replace(' €', '')}</td>

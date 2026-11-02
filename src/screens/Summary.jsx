@@ -5,7 +5,7 @@ import { MonthNav, TxRow, TxTable, Icon } from '../components.jsx';
 export default function Summary({ month, setMonth }) {
   const s = useStore();
   const cats = categoryMap(s);
-  const { inc, exp, bal } = monthTotals(s.transactions, month);
+  const { inc, exp, bal, fixed, variable } = monthTotals(s.transactions, month);
   const prev = monthTotals(s.transactions, addMonths(month, -1));
   const monthTx = s.transactions.filter((x) => x.date.startsWith(month));
 
@@ -61,11 +61,17 @@ export default function Summary({ month, setMonth }) {
             <span>Ingresos <span class="chev" aria-hidden="true">›</span></span>
             <strong class="num income">{fmtEUR(inc)}</strong>
           </a>
-          <a class="kpi-card link-card" href="#/movimientos?tipo=gastos">
-            <span>Gastos <span class="chev" aria-hidden="true">›</span></span>
-            <strong class="num">{fmtEUR(exp)}</strong>
+          <div class="kpi-card">
+            <a class="kpi-main" href="#/movimientos?tipo=gastos">
+              <span>Gastos <span class="chev" aria-hidden="true">›</span></span>
+              <strong class="num">{fmtEUR(exp)}</strong>
+            </a>
+            <div class="split">
+              <a href="#/movimientos?tipo=gastos&clase=fijos"><span>Fijos</span><b class="num">{fmtEUR(fixed)}</b></a>
+              <a href="#/movimientos?tipo=gastos&clase=variables"><span>Variables</span><b class="num">{fmtEUR(variable)}</b></a>
+            </div>
             {vsPrev && <small class="muted">{vsPrev}</small>}
-          </a>
+          </div>
         </div>
         <div class="cols">
           {categories}
@@ -90,6 +96,10 @@ export default function Summary({ month, setMonth }) {
             <a class="hero-box link-card" href="#/movimientos?tipo=ingresos"><span>Ingresos ›</span><strong class="num hero-up">{fmtEUR(inc)}</strong></a>
             <a class="hero-box link-card" href="#/movimientos?tipo=gastos"><span>Gastos ›</span><strong class="num">{fmtEUR(exp)}</strong></a>
           </div>
+        </div>
+        <div class="split split-card">
+          <a href="#/movimientos?tipo=gastos&clase=fijos"><span>Gastos fijos ›</span><b class="num">{fmtEUR(fixed)}</b></a>
+          <a href="#/movimientos?tipo=gastos&clase=variables"><span>Gastos variables ›</span><b class="num">{fmtEUR(variable)}</b></a>
         </div>
         {categories}
         <section class="card">

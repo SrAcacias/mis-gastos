@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { addMonths, monthLabel, fmtEUR, shortDate } from './lib.js';
+import { isFixed } from './store.js';
 
 const P = {
   chart: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
@@ -64,7 +65,7 @@ export function TxRow({ tx, cat, showDate, dateLabel }) {
         <span class="row-sub">
           <span>{cat?.name || 'Sin categoría'}{showDate ? ` · ${dateLabel}` : ''}</span>
           {tx.method === 'efectivo' && <span class="pill">Efectivo</span>}
-          {tx.recurring_id && <span class="pill">Fijo</span>}
+          {isFixed(tx) && <span class="pill">Fijo</span>}
           {tx.car_log_id && <span class="pill">Km</span>}
         </span>
       </div>
@@ -105,6 +106,7 @@ export function TxTable({ list, cats, showYear }) {
               <tr onClick={() => (location.hash = `#/editar/${x.id}`)}>
                 <td class="muted nowrap">{shortDate(x.date)}{showYear ? ` ${x.date.slice(2, 4)}` : ''}</td>
                 <td><a class="tx-link" href={`#/editar/${x.id}`}>{x.concept || cat?.name || 'Sin concepto'}</a>
+                  {isFixed(x) && <span class="pill" style={{ marginLeft: '6px' }}>Fijo</span>}
                   {x.method === 'efectivo' && <span class="pill" style={{ marginLeft: '6px' }}>Efectivo</span>}
                 </td>
                 <td><span class="pill">{inc && !cat ? 'Ingreso' : cat?.name || 'Sin categoría'}</span></td>

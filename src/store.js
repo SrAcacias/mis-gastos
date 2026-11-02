@@ -188,7 +188,7 @@ async function runRecurring() {
           try {
             const [row] = await db.insert('transactions', [{
               date: next, kind: r.kind, concept: r.concept, category_id: r.category_id,
-              amount_cents: r.amount_cents, method: r.method, recurring_id: r.id
+              amount_cents: r.amount_cents, method: r.method, recurring_id: r.id, is_fixed: true
             }]);
             added.push(row);
           } catch (e) { if (e.code !== '23505') throw e; }
@@ -267,6 +267,9 @@ export async function saveRule(rule) {
   await runRecurring();
 }
 export async function deleteRule(id) {
+  // Los movimientos ya creados siguen contando como fijos
+  for (const x of state.transactions.filter((x) => x.recurring_id === id && !x.is_fixed)) await db.update('transactions', x.id, { is_fixed: true });
+  state = { ...state, transactions: state.transactions.map((x) => (x.recurring_id === id ? { ...x, is_fixed: true } : x)) };
   await db.remove('recurring_rules', id);
   set({
     rules: state.rules.filter((r) => r.id !== id),
@@ -364,7 +367,7 @@ export function exportCSV({ from, to } = {}) {
     .map((x) => ({
       fecha: x.date, tipo: x.kind, concepto: x.concept, categoria: cats[x.category_id] || '',
       importe: (x.amount_cents / 100).toFixed(2).replace('.', ','), cuenta: x.method === 'efectivo' ? 'Efectivo' : 'Banco',
-      fijo: x.recurring_id ? 'sí' : 'no'
+      fijo: isFixed(x) ? 'sí' : 'no'
     }));
   return toCSV(rows, CSV_HEADERS);
 }
@@ -387,7 +390,8 @@ export async function importRows(rows) {
     if (catName && !cat) cat = await saveCategory({ name: catName, kind, color: kind === 'ingreso' ? '#0F766E' : '#6B7280' });
     toInsert.push({
       date, kind, concept, amount_cents: amount, category_id: cat?.id || null,
-      method: norm(r.cuenta || r.method).startsWith('efect') ? 'efectivo' : 'banco'
+      method: norm(r.cuenta || r.method).startsWith('efect') ? 'efectivo' : 'banco',
+      is_fixed: ['si', 'sí', 'true', '1', 'x'].includes(norm(r.fijo))
     });
   }
   if (toInsert.length) {
@@ -398,10 +402,14 @@ export async function importRows(rows) {
 }
 
 // ---------------- Consultas ----------------
+export const isFixed = (x) => !!(x.recurring_id || x.is_fixed);
 export function categoryMap(s = state) { return Object.fromEntries(s.categories.map((c) => [c.id, c])); }
 export function monthTotals(transactions, month) {
-  let inc = 0, exp = 0;
-  for (const x of transactions) if (x.date.startsWith(month)) { if (x.kind === 'ingreso') inc += x.amount_cents; else exp += x.amount_cents; }
-  return { inc, exp, bal: inc - exp };
+  let inc = 0, exp = 0, fixed = 0;
+  for (const x of transactions) if (x.date.startsWith(month)) {
+    if (x.kind === 'ingreso') inc += x.amount_cents;
+    else { exp += x.amount_cents; if (isFixed(x)) fixed += x.amount_cents; }
+  }
+  return { inc, exp, bal: inc - exp, fixed, variable: exp - fixed };
 }
 export { shortDate };

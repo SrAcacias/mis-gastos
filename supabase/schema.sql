@@ -54,6 +54,7 @@ create table if not exists public.transactions (
   method        text not null default 'banco' check (method in ('banco','efectivo')),
   recurring_id  uuid references public.recurring_rules on delete set null,
   car_log_id    uuid references public.car_logs on delete cascade,
+  is_fixed      boolean not null default false,
   created_at    timestamptz not null default now()
 );
 create index if not exists transactions_user_date on public.transactions (user_id, date desc);
@@ -138,3 +139,7 @@ end $$;
 
 revoke all on function public.quick_add(text,numeric,text,text,text,text) from public;
 grant execute on function public.quick_add(text,numeric,text,text,text,text) to anon, authenticated;
+
+-- v2: marca de gasto fijo (también para los que no genera un fijo automático)
+alter table public.transactions add column if not exists is_fixed boolean not null default false;
+update public.transactions set is_fixed = true where recurring_id is not null and is_fixed = false;

@@ -17,6 +17,7 @@ export default function Edit({ id, query = {} }) {
   const [date, setDate] = useState(tx?.date || today());
   const [concept, setConcept] = useState(tx?.concept || query.concepto || '');
   const [method, setMethod] = useState(tx?.method || (norm(query.cuenta).startsWith('efect') ? 'efectivo' : 'banco'));
+  const [fixed, setFixed] = useState(!!(tx?.is_fixed || tx?.recurring_id));
   const [busy, setBusy] = useState(false);
   const [ask, setAsk] = useState(null); // 'scope' | 'delete'
   const [err, setErr] = useState('');
@@ -25,7 +26,7 @@ export default function Edit({ id, query = {} }) {
 
   const cats = s.categories.filter((c) => c.kind === kind);
   const cents = parseAmount(amount);
-  const data = () => ({ kind, amount_cents: cents, category_id: catId || null, date, concept: concept.trim(), method });
+  const data = () => ({ kind, amount_cents: cents, category_id: catId || null, date, concept: concept.trim(), method, is_fixed: tx?.recurring_id ? true : fixed });
 
   const save = async (scope) => {
     if (!cents || cents <= 0) { setErr('Escribe un importe'); return; }
@@ -84,6 +85,15 @@ export default function Edit({ id, query = {} }) {
       </div>
 
       <label class="field">Concepto<input class="input" placeholder="Opcional" value={concept} onInput={(e) => setConcept(e.target.value)} /></label>
+
+      {kind === 'gasto' && (
+        <label class="toggle-row">
+          <input type="checkbox" checked={fixed || !!tx?.recurring_id} disabled={!!tx?.recurring_id} onChange={(e) => setFixed(e.target.checked)} />
+          <span class="grow"><strong>Gasto fijo</strong>
+            <span class="muted">{tx?.recurring_id ? 'Se genera solo cada mes (Ajustes → Gastos fijos)' : 'Cuota, suscripción, préstamo… Sale aparte de los variables'}</span>
+          </span>
+        </label>
+      )}
 
       {err && <p class="notice" role="alert">{err}</p>}
       <button class="btn big" disabled={busy}>{tx ? 'Guardar cambios' : 'Guardar'}</button>

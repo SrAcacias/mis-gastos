@@ -241,3 +241,21 @@ code, .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-
 .matrix td, .matrix th { white-space: nowrap; padding: 8px 10px; font-size: 13px; }
 .matrix tr.sel td { background: var(--accent-soft); }
 .matrix tbody tr:hover td { background: var(--surface-2); }
+
+/* ---------- Fijos / variables ---------- */
+.kpi-main { text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 6px; border-radius: 10px; }
+.kpi-main:hover strong { color: var(--accent-text); }
+.split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.split a { text-decoration: none; color: inherit; background: var(--surface-2); border-radius: 12px; padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; min-height: 44px; justify-content: center; }
+.split a:hover { box-shadow: 0 0 0 2px var(--accent); }
+.split a span { font-size: 12px !important; color: var(--muted); font-weight: 600; }
+.split a b { font-size: 15px; font-weight: 800; }
+.split-card a { background: var(--surface); padding: 12px 14px; border-radius: 16px; }
+.split-card a b { font-size: 18px; }
+.toggle-row { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: 14px; padding: 12px 14px; cursor: pointer; }
+.toggle-row input { width: 22px; height: 22px; accent-color: var(--accent); flex-shrink: 0; }
+.toggle-row .grow { display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
+.toggle-row .muted { font-size: 12px; }
+.matrix tr.total-row td { font-weight: 800; border-top: 2px solid var(--line); }
+.matrix tr.total-row:first-of-type td { }
+.matrix tr.total-row + tr.total-row td { border-top: none; }

@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { useStore, categoryMap } from '../store.js';
+import { useStore, categoryMap, isFixed } from '../store.js';
 import { fmtEUR, dayLabel, norm, parseAmount, monthLabel, shortDate, MONTHS_SHORT, MONTHS } from '../lib.js';
 import { MonthNav, Segmented, TxRow, TxTable, Icon } from '../components.jsx';
 
@@ -11,6 +11,7 @@ export default function Movements({ month, setMonth, query = {} }) {
   const [q, setQ] = useState('');
   const [kind, setKind] = useState(['gastos', 'ingresos'].includes(query.tipo) ? query.tipo : 'todos');
   const [catId, setCatId] = useState(query.cat || '');
+  const [clase, setClase] = useState(['fijos', 'variables'].includes(query.clase) ? query.clase : '');
   const [sort, setSort] = useState('fecha');
   const [desc, setDesc] = useState(true);
 
@@ -23,6 +24,8 @@ export default function Movements({ month, setMonth, query = {} }) {
     if (kind === 'gastos' && x.kind !== 'gasto') return false;
     if (kind === 'ingresos' && x.kind !== 'ingreso') return false;
     if (catId && x.category_id !== catId) return false;
+    if (clase === 'fijos' && !isFixed(x)) return false;
+    if (clase === 'variables' && (isFixed(x) || x.kind !== 'gasto')) return false;
     if (searching) {
       const [y, m, d] = x.date.split('-');
       const hay = norm([x.concept, cats[x.category_id]?.name, x.date, `${+d}/${+m}/${y}`, `${+d} ${MONTHS_SHORT[m - 1]}`, MONTHS[m - 1], (x.amount_cents / 100).toFixed(2).replace('.', ',')].join(' '));
@@ -78,12 +81,21 @@ export default function Movements({ month, setMonth, query = {} }) {
 
         <Segmented label="Tipo" value={kind} onChange={(v) => { setKind(v); setCatId(''); }} options={[['todos', 'Todos'], ['gastos', 'Gastos'], ['ingresos', 'Ingresos']]} />
 
-        <label class="field"><span class="sr">Categoría</span>
-          <select class="select" value={catId} onChange={(e) => setCatId(e.target.value)}>
-            <option value="">Todas las categorías</option>
-            {visibleCats.map((c) => <option value={c.id}>{c.name}</option>)}
-          </select>
-        </label>
+        <div class="grid-2">
+          <label class="field"><span class="sr">Categoría</span>
+            <select class="select" value={catId} onChange={(e) => setCatId(e.target.value)}>
+              <option value="">Todas las categorías</option>
+              {visibleCats.map((c) => <option value={c.id}>{c.name}</option>)}
+            </select>
+          </label>
+          <label class="field"><span class="sr">Fijos o variables</span>
+            <select class="select" value={clase} onChange={(e) => setClase(e.target.value)}>
+              <option value="">Fijos y variables</option>
+              <option value="fijos">Solo fijos</option>
+              <option value="variables">Solo variables</option>
+            </select>
+          </label>
+        </div>
 
         <div class="sort-row">
           <span class="muted" style={{ fontSize: '13px', fontWeight: 600 }}>Ordenar</span>
