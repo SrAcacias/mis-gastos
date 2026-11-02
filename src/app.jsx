@@ -33,7 +33,7 @@ export function App() {
   const [p0, p1] = route.parts;
   let screen; let active = p0 || 'resumen';
   if (!p0) screen = <Summary month={month} setMonth={setMonth} />;
-  else if (p0 === 'movimientos') screen = <Movements month={month} setMonth={setMonth} />;
+  else if (p0 === 'movimientos') screen = <Movements key={`mov-${JSON.stringify(route.query)}`} month={month} setMonth={setMonth} query={route.query} />;
   else if (p0 === 'nuevo') { screen = <Edit key={`new-${JSON.stringify(route.query)}`} query={route.query} />; active = 'nuevo'; }
   else if (p0 === 'editar') { screen = <Edit key={p1} id={p1} />; active = 'movimientos'; }
   else if (p0 === 'grafico') screen = <Chart />;
@@ -44,7 +44,7 @@ export function App() {
   const links = [
     ['resumen', '#/', 'chart', 'Resumen'],
     ['movimientos', '#/movimientos', 'list', 'Movimientos'],
-    ['grafico', '#/grafico', 'trend', 'Gráfico'],
+    ['grafico', '#/grafico', 'trend', 'Balance'],
     ['coche', '#/coche', 'car', 'Coche'],
     ['ajustes', '#/ajustes', 'settings', 'Ajustes']
   ];

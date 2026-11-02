@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { useStore } from '../store.js';
 import { fmtEUR, currentMonth, addMonths, monthLabel } from '../lib.js';
+import { Segmented } from '../components.jsx';
 
 const GASTO = 'color-mix(in srgb, var(--ink) 28%, var(--surface))';
 
@@ -15,6 +16,7 @@ export default function Chart() {
   const [from, setFrom] = useState(defFrom);
   const [to, setTo] = useState(cm);
   const [show, setShow] = useState({ inc: true, exp: true, bal: true });
+  const [view, setView] = useState('general');
 
   const months = allMonths.filter((m) => m >= from && m <= to);
   const data = months.map((m) => {
@@ -44,7 +46,7 @@ export default function Chart() {
       <div class="header">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <span class="eyebrow">{monthLabel(from)} – {monthLabel(to)}</span>
-          <h1 class="title">Gráfico</h1>
+          <h1 class="title">Balance</h1>
         </div>
       </div>
 
@@ -61,6 +63,9 @@ export default function Chart() {
         </label>
       </div>
 
+      <Segmented label="Vista" value={view} onChange={setView} options={[['general', 'General'], ['categorias', 'Por categoría']]} />
+
+      {view === 'categorias' ? <ByCategory months={months} /> : (<>
       <div class="kpis">
         <div class="kpi"><span>Ingresos</span><strong class="num income">{fmtEUR(tot.inc)}</strong></div>
         <div class="kpi"><span>Gastos</span><strong class="num">{fmtEUR(tot.exp)}</strong></div>
@@ -132,6 +137,7 @@ export default function Chart() {
           </table>
         </div>
       </section>
+      </>)}
     </div>
   );
 }
@@ -150,4 +156,98 @@ function shortEUR(c) {
   const e = c / 100;
   if (Math.abs(e) >= 1000) return `${(e / 1000).toFixed(Math.abs(e) >= 10000 ? 0 : 1).replace('.', ',')}k €`;
   return `${Math.round(e)} €`;
+}
+
+// ---------- Evolución mensual por categoría ----------
+function ByCategory({ months }) {
+  const s = useStore();
+  const inRange = s.transactions.filter((x) => months.length && x.date.slice(0, 7) >= months[0] && x.date.slice(0, 7) <= months[months.length - 1]);
+  const totals = {};
+  for (const x of inRange) totals[x.category_id || ''] = (totals[x.category_id || ''] || 0) + x.amount_cents;
+  const gastos = s.categories.filter((c) => c.kind === 'gasto').sort((a, b) => (totals[b.id] || 0) - (totals[a.id] || 0));
+  const ingresos = s.categories.filter((c) => c.kind === 'ingreso');
+  const [catId, setCatId] = useState(gastos[0]?.id || '');
+  const cat = s.categories.find((c) => c.id === catId);
+
+  const per = (id) => months.map((m) => inRange.filter((x) => x.category_id === id && x.date.startsWith(m)).reduce((a, x) => a + x.amount_cents, 0));
+  const data = per(catId);
+  const total = data.reduce((a, b) => a + b, 0);
+  const withData = data.filter((v) => v > 0).length || 1;
+  const maxI = data.indexOf(Math.max(...data));
+
+  const maxV = Math.max(1, ...data);
+  const W = Math.max(640, months.length * 64), H = 260, padL = 64, padR = 12, padT = 24, padB = 34;
+  const iw = W - padL - padR, ih = H - padT - padB;
+  const y = (v) => padT + ((maxV - v) / maxV) * ih;
+  const step = iw / Math.max(1, months.length);
+  const bw = Math.min(36, step * 0.6);
+  const ticks = niceTicks(0, maxV);
+  const avg = Math.round(total / months.length || 0);
+  const color = cat?.kind === 'ingreso' ? 'var(--accent)' : 'var(--accent)';
+
+  const matrix = gastos.filter((c) => totals[c.id]).map((c) => ({ c, vals: per(c.id) }));
+
+  return (
+    <>
+      <label class="field">Categoría
+        <select class="select" value={catId} onChange={(e) => setCatId(e.target.value)}>
+          <optgroup label="Gastos">{gastos.map((c) => <option value={c.id}>{c.name}</option>)}</optgroup>
+          <optgroup label="Ingresos">{ingresos.map((c) => <option value={c.id}>{c.name}</option>)}</optgroup>
+        </select>
+      </label>
+
+      <div class="kpis">
+        <div class="kpi"><span>Total {cat?.name?.toLowerCase()}</span><strong class="num">{fmtEUR(total)}</strong></div>
+        <div class="kpi"><span>Media / mes</span><strong class="num">{fmtEUR(avg)}</strong></div>
+        <div class="kpi"><span>Mes con más</span><strong class="num">{total ? `${monthLabel(months[maxI], true)} · ${fmtEUR(data[maxI])}` : '—'}</strong></div>
+      </div>
+
+      <section class="card">
+        <h2 class="card-title">{cat?.name} por mes</h2>
+        <div class="scroll-x">
+          <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ minWidth: `${Math.min(W, 640)}px`, display: 'block' }} role="img" aria-label={`${cat?.name} por mes`}>
+            {ticks.map((t) => (
+              <g>
+                <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} style={{ stroke: t === 0 ? 'var(--muted)' : 'var(--line)' }} stroke-width="1" />
+                <text x={padL - 8} y={y(t) + 4} text-anchor="end" font-size="11" style={{ fill: 'var(--muted)' }}>{shortEUR(t)}</text>
+              </g>
+            ))}
+            {avg > 0 && <g>
+              <line x1={padL} x2={W - padR} y1={y(avg)} y2={y(avg)} stroke-dasharray="5 5" stroke-width="1.5" style={{ stroke: 'var(--ink)' }} />
+              <text x={W - padR} y={y(avg) - 6} text-anchor="end" font-size="11" font-weight="700" style={{ fill: 'var(--ink)' }}>media {shortEUR(avg)}</text>
+            </g>}
+            {data.map((v, i) => {
+              const cx = padL + step * i + step / 2;
+              return (
+                <g>
+                  <rect x={cx - bw / 2} y={y(v)} width={bw} height={Math.max(0, y(0) - y(v))} rx="4" style={{ fill: color }}><title>{`${monthLabel(months[i])} · ${fmtEUR(v)}`}</title></rect>
+                  {v > 0 && <text x={cx} y={y(v) - 6} text-anchor="middle" font-size="10" font-weight="700" style={{ fill: 'var(--ink)' }}>{shortEUR(v)}</text>}
+                  <text x={cx} y={H - 12} text-anchor="middle" font-size="11" font-weight="600" style={{ fill: 'var(--muted)' }}>{monthLabel(months[i], true)}</text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Gastos por categoría y mes</h2>
+        <div class="scroll-x">
+          <table class="tbl num matrix">
+            <thead><tr><th>Categoría</th>{months.map((m) => <th class="r">{monthLabel(m, true)}</th>)}<th class="r">Total</th></tr></thead>
+            <tbody>
+              {matrix.map(({ c, vals }) => (
+                <tr class={c.id === catId ? 'sel' : ''} onClick={() => setCatId(c.id)} style={{ cursor: 'pointer' }}>
+                  <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{c.name}</td>
+                  {vals.map((v) => <td class="r">{v ? fmtEUR(v).replace(' €', '') : <span class="muted">—</span>}</td>)}
+                  <td class="r" style={{ fontWeight: 800 }}>{fmtEUR(vals.reduce((a, b) => a + b, 0)).replace(' €', '')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" style={{ fontSize: '12px' }}>Importes en euros. Pulsa una fila para verla en el gráfico.</p>
+      </section>
+    </>
+  );
 }

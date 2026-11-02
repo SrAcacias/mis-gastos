@@ -33,10 +33,10 @@ export default function Summary({ month, setMonth }) {
       <h2 class="card-title">Gastos por categoría</h2>
       {rows.length === 0 && <p class="empty">Sin gastos este mes</p>}
       {rows.map((r) => (
-        <div class="bar-row">
-          <div class="bar-head"><span>{r.name}</span><span class="muted num">{fmtEUR(r.cents)}</span></div>
+        <a class="bar-row link-row" href={`#/movimientos?tipo=gastos${r.id ? `&cat=${r.id}` : ''}`} aria-label={`Ver gastos de ${r.name}: ${fmtEUR(r.cents)}`}>
+          <div class="bar-head"><span>{r.name}</span><span class="muted num">{fmtEUR(r.cents)} <span class="chev" aria-hidden="true">›</span></span></div>
           <div class="bar"><div style={{ width: `${Math.max(2, Math.round((r.cents / max) * 100))}%` }} /></div>
-        </div>
+        </a>
       ))}
     </section>
   );
@@ -57,15 +57,15 @@ export default function Summary({ month, setMonth }) {
             <span>Balance</span>
             <strong class="num">{fmtEUR(bal, { sign: true })}</strong>
           </div>
-          <div class="kpi-card">
-            <span>Ingresos</span>
+          <a class="kpi-card link-card" href="#/movimientos?tipo=ingresos">
+            <span>Ingresos <span class="chev" aria-hidden="true">›</span></span>
             <strong class="num income">{fmtEUR(inc)}</strong>
-          </div>
-          <div class="kpi-card">
-            <span>Gastos</span>
+          </a>
+          <a class="kpi-card link-card" href="#/movimientos?tipo=gastos">
+            <span>Gastos <span class="chev" aria-hidden="true">›</span></span>
             <strong class="num">{fmtEUR(exp)}</strong>
             {vsPrev && <small class="muted">{vsPrev}</small>}
-          </div>
+          </a>
         </div>
         <div class="cols">
           {categories}
@@ -87,8 +87,8 @@ export default function Summary({ month, setMonth }) {
             <span class="hero-amount num">{fmtEUR(bal, { sign: true })}</span>
           </div>
           <div class="grid-2">
-            <div class="hero-box"><span>Ingresos</span><strong class="num hero-up">{fmtEUR(inc)}</strong></div>
-            <div class="hero-box"><span>Gastos</span><strong class="num">{fmtEUR(exp)}</strong></div>
+            <a class="hero-box link-card" href="#/movimientos?tipo=ingresos"><span>Ingresos ›</span><strong class="num hero-up">{fmtEUR(inc)}</strong></a>
+            <a class="hero-box link-card" href="#/movimientos?tipo=gastos"><span>Gastos ›</span><strong class="num">{fmtEUR(exp)}</strong></a>
           </div>
         </div>
         {categories}

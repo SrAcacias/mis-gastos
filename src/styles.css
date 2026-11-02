@@ -220,3 +220,24 @@ code, .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-
 }
 .movements { max-width: 760px; }
 @media (min-width: 900px) { .movements { max-width: 1080px; } .movements .search, .movements .segmented, .movements .grid-2 { max-width: 760px; } }
+
+/* ---------- Enlaces y orden ---------- */
+.link-card { text-decoration: none; color: inherit; transition: transform .12s ease, box-shadow .12s ease; }
+.link-card:hover { box-shadow: 0 0 0 2px var(--accent); }
+.hero-box.link-card { color: var(--hero-ink); }
+.link-row { text-decoration: none; color: inherit; border-radius: 8px; margin: -4px -6px; padding: 4px 6px; }
+.link-row:hover { background: var(--surface-2); }
+.chev { color: var(--muted); font-weight: 700; }
+.filters { display: flex; flex-direction: column; gap: 12px; }
+.sort-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sort-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.sort-pill { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 700; color: var(--muted); }
+.sort-pill[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+@media (min-width: 900px) {
+  .filters { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); align-items: center; max-width: none; }
+  .filters .sort-row { grid-column: 1 / -1; }
+  .movements .search, .movements .segmented { max-width: none; }
+}
+.matrix td, .matrix th { white-space: nowrap; padding: 8px 10px; font-size: 13px; }
+.matrix tr.sel td { background: var(--accent-soft); }
+.matrix tbody tr:hover td { background: var(--surface-2); }
