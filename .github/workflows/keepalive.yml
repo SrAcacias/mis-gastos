@@ -1,0 +1,25 @@
+# Evita que Supabase pause el proyecto gratuito: hace una consulta cada 3 días
+name: Mantener Supabase activo
+
+on:
+  schedule:
+    - cron: '17 7 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Consulta a Supabase
+        run: |
+          URL=$(grep -oP "SUPABASE_URL = '\K[^']+" src/config.js || true)
+          KEY=$(grep -oP "SUPABASE_ANON_KEY = '\K[^']+" src/config.js || true)
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then echo "Falta configurar src/config.js"; exit 0; fi
+          for i in 1 2 3; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" "$URL/rest/v1/categories?select=id&limit=1" -H "apikey: $KEY")
+            echo "Respuesta: $CODE"
+            [ "$CODE" = "200" ] && exit 0
+            sleep 20
+          done
+          exit 1
