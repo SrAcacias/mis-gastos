@@ -53,7 +53,6 @@ export function App() {
     <div class="shell">
       <aside class="sidebar">
         <div class="brand"><span class="brand-mark"><Icon name="chart" size={18} stroke={2.2} /></span>Mis gastos</div>
-        <a class="btn side-add" href="#/nuevo"><Icon name="plus" size={18} stroke={2.5} />Añadir movimiento</a>
         <nav class="side-nav" aria-label="Secciones">
           {links.map(([k, href, icon, label]) => (
             <a class={`side-link ${active === k ? 'active' : ''}`} href={href} aria-current={active === k ? 'page' : undefined}><Icon name={icon} size={20} />{label}</a>

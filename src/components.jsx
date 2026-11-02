@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { addMonths, monthLabel, fmtEUR } from './lib.js';
+import { addMonths, monthLabel, fmtEUR, shortDate } from './lib.js';
 
 const P = {
   chart: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
@@ -29,9 +29,9 @@ export function Icon({ name, size = 22, stroke = 2 }) {
   );
 }
 
-export function MonthNav({ month, setMonth, max }) {
+export function MonthNav({ month, setMonth, max, spread }) {
   return (
-    <div class="month-nav">
+    <div class={`month-nav ${spread ? 'spread' : ''}`}>
       <button class="icon-btn" aria-label="Mes anterior" onClick={() => setMonth(addMonths(month, -1))}><Icon name="left" size={20} /></button>
       <h1>{monthLabel(month)}</h1>
       <button class="icon-btn" aria-label="Mes siguiente" disabled={max && month >= max} onClick={() => setMonth(addMonths(month, 1))}><Icon name="right" size={20} /></button>
@@ -50,9 +50,8 @@ export function Segmented({ value, onChange, options, label }) {
 }
 
 export function Avatar({ cat, kind }) {
-  const color = cat?.color || '#6B7280';
   const letter = (cat?.name || (kind === 'ingreso' ? 'I' : '?')).charAt(0).toUpperCase();
-  return <div class="avatar" style={{ background: `color-mix(in srgb, ${color} 16%, var(--surface))`, color: `color-mix(in srgb, ${color} var(--av-mix), #FFFFFF)` }}>{letter}</div>;
+  return <div class="avatar" aria-hidden="true">{letter}</div>;
 }
 
 export function TxRow({ tx, cat, showDate, dateLabel }) {
@@ -89,6 +88,32 @@ export function Dialog({ title, children, onClose }) {
         <h2>{title}</h2>
         {children}
       </div>
+    </div>
+  );
+}
+
+export function TxTable({ list, cats, showYear }) {
+  return (
+    <div class="scroll-x">
+      <table class="tbl tx-table">
+        <thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th class="r">Importe</th></tr></thead>
+        <tbody>
+          {list.map((x) => {
+            const inc = x.kind === 'ingreso';
+            const cat = cats[x.category_id];
+            return (
+              <tr onClick={() => (location.hash = `#/editar/${x.id}`)}>
+                <td class="muted nowrap">{shortDate(x.date)}{showYear ? ` ${x.date.slice(2, 4)}` : ''}</td>
+                <td><a class="tx-link" href={`#/editar/${x.id}`}>{x.concept || cat?.name || 'Sin concepto'}</a>
+                  {x.method === 'efectivo' && <span class="pill" style={{ marginLeft: '6px' }}>Efectivo</span>}
+                </td>
+                <td><span class="pill">{inc && !cat ? 'Ingreso' : cat?.name || 'Sin categoría'}</span></td>
+                <td class={`r num strong ${inc ? 'income' : ''}`}>{fmtEUR(inc ? x.amount_cents : -x.amount_cents)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

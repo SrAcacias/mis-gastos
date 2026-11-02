@@ -65,7 +65,7 @@ create unique index if not exists transactions_car_once on public.transactions (
 create table if not exists public.settings (
   user_id         uuid primary key default auth.uid() references auth.users on delete cascade,
   theme           text not null default 'teal',
-  mode            text not null default 'auto' check (mode in ('auto','light','dark')),
+  mode            text not null default 'light' check (mode in ('auto','light','dark')),
   km_per_l        numeric(6,2) not null default 16.67,
   shortcut_token  text unique,
   seeded          boolean not null default false,

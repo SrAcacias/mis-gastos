@@ -4,7 +4,7 @@ import { initAuth, applyTheme } from './store.js';
 import './styles.css';
 
 // Aplica el último tema guardado antes de cargar datos (evita parpadeo)
-try { applyTheme(JSON.parse(localStorage.getItem('mis-gastos-theme')) || { theme: 'teal', mode: 'auto' }); } catch { applyTheme({ theme: 'teal', mode: 'auto' }); }
+try { applyTheme(JSON.parse(localStorage.getItem('mis-gastos-theme')) || { theme: 'teal', mode: 'light' }); } catch { applyTheme({ theme: 'teal', mode: 'light' }); }
 
 render(<App />, document.getElementById('app'));
 initAuth();

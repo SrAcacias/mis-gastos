@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { useStore, categoryMap } from '../store.js';
 import { fmtEUR, dayLabel, norm, parseAmount, monthLabel, MONTHS_SHORT, MONTHS } from '../lib.js';
-import { MonthNav, Segmented, TxRow, Icon } from '../components.jsx';
+import { MonthNav, Segmented, TxRow, TxTable, Icon } from '../components.jsx';
 
 export default function Movements({ month, setMonth }) {
   const s = useStore();
@@ -40,13 +40,16 @@ export default function Movements({ month, setMonth }) {
   const visibleCats = s.categories.filter((c) => kind === 'todos' || (kind === 'gastos' ? c.kind === 'gasto' : c.kind === 'ingreso'));
 
   return (
-    <div class="page" style={{ maxWidth: '760px' }}>
+    <div class="page movements">
       <div class="header">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           {searching && <span class="eyebrow">Todos los meses</span>}
           <h1 class="title">Movimientos</h1>
         </div>
-        {!searching && <MonthNav month={month} setMonth={setMonth} />}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {!searching && <MonthNav month={month} setMonth={setMonth} />}
+          <a class="btn desktop-only" href="#/nuevo"><Icon name="plus" size={18} stroke={2.5} />Añadir movimiento</a>
+        </div>
       </div>
 
       <label class="search">
@@ -79,8 +82,9 @@ export default function Movements({ month, setMonth }) {
       </div>
 
       {groups.length === 0 && <p class="empty">{searching ? 'No hay resultados' : 'No hay movimientos este mes'}</p>}
+      {list.length > 0 && <section class="card desktop-only"><TxTable list={list} cats={cats} showYear={searching} /></section>}
       {groups.map((g) => (
-        <div class="day-group">
+        <div class="day-group mobile-only">
           <span class="day-label">{dayLabel(g.date)}{searching ? ` ${g.date.slice(0, 4)}` : ''}</span>
           <div class="day-card list">
             {g.items.map((x) => <TxRow tx={x} cat={cats[x.category_id]} />)}

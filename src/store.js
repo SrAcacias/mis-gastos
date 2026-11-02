@@ -137,7 +137,7 @@ export async function load({ silent = false } = {}) {
     const [categories, rules, carLogs, transactions, settingsRows] = await Promise.all(TABLES.map((t) => db.select(t)));
     let settings = settingsRows[0];
     if (!settings) {
-      [settings] = await db.insert('settings', [{ ...(isLocal ? { user_id: 'local' } : {}), theme: 'teal', mode: 'auto', km_per_l: 16.67, seeded: false }]);
+      [settings] = await db.insert('settings', [{ ...(isLocal ? { user_id: 'local' } : {}), theme: 'teal', mode: 'light', km_per_l: 16.67, seeded: false }]);
     }
     set({
       categories: categories.sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name)),
